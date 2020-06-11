@@ -1,0 +1,28 @@
+---
+- hosts: dev
+  vars:
+     dockerport: 8888
+     contport: 8080
+  become: true
+  tasks:
+     - name: Update apt repo
+       apt: update_cache=yes name=docker.io state=present
+     - name: Clone Git repo
+       git:
+         repo: https://github.com/pbeniwal/calculator.git
+         dest: /home/pandrajucs/calculator/
+         force: yes
+     - name: Build
+       shell:
+          cmd: mvn package
+          chdir: /home/pandrajucs/calculator/
+     - name: Create Image
+       shell:
+            cmd: docker build -t mytomcat .
+            chdir: /home/pandrajucs/calculator/
+     - name: Remove Docker Container
+       shell:
+           cmd: docker rm --force mytomcat || echo
+     - name: Start Docker Container
+       shell:
+           cmd: docker run -d --name=mytomcat -p {{ dockerport }}:{{ contport }} mytomcat
